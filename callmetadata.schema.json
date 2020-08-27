@@ -22,35 +22,55 @@
                     "format": "date-time",
                     "description": "Date and time when the state changed for the given participant",
                     "example": "2016-06-18T08:05:15Z"
+                },
+                "audioInterface": {
+                    "type": "string",
+                    "description": "The interface on the device used to handle the communication - it could change during the lifetime of the communication, for example:  ‘left handset’, ‘right handset’, ‘microphone’,‘speaker’”"
                 }
             }
         },
         "member": {
-            "name": {
-                "type": "string",
-                "example": "Steve Jones",
-                "description": "Name of the participant communicating"
-            },
-            "groupName": {
-                "type": "string",
-                "example": "Energy Desk",
-                "description": "Name of the group for which the participant is representing in the communication"
-            },
-            "firmName": {
-                "type": "string",
-                "example": "XYZ Firm",
-                "description": "Name of the participant's firm represented in the communication"
-            },
-            "timeZoneOffset": {
-                "type": "string",
-                "example": "UTC -05:00:00",
-                "description": "The UTC timezone offset for the participant"
+            "type": "object",
+            "properties": {
+                "sUserID": {
+                    "type": "string",
+                    "example": "123456",
+                    "description": "The userID from within the system capturing the record"
+                },
+                "pUserID": {
+                    "type": "string",
+                    "example": "123456",
+                    "description": "The userID from within the underlying platform used for the communication"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Steve Jones",
+                    "description": "Name of the participant communicating"
+                },
+                "groupName": {
+                    "type": "string",
+                    "example": "Energy Desk",
+                    "description": "Name of the group for which the participant is representing in the communication"
+                },
+                "firmName": {
+                    "type": "string",
+                    "example": "XYZ Firm",
+                    "description": "Name of the participant's firm represented in the communication"
+                },
+                "timeZoneOffset": {
+                    "type": "string",
+                    "example": "UTC -05:00:00",
+                    "description": "The UTC timezone offset for the participant"
+                }
             }
         },
         "participant": {
             "type": "object",
             "description": "Specific details about a participant of the call",
             "additionalProperties": true,
+            "required": [
+                "address"
+            ],
             "properties": {
                 "member": {
                     "$ref": "#/definitions/member"
@@ -98,7 +118,8 @@
         "comFile": {
             "type": "object",
             "required": [
-                "fileName"
+                "fileName",
+                "checksum"
             ],
             "description": "Information about the file associated with the communication record",
             "properties": {
@@ -158,23 +179,48 @@
         }
     },
     "properties": {
+        "system": {
+            "type": "object",
+            "description": "The system capturing the communication record",
+            "properties": {
+                "UID": {
+                    "type": "string",
+                    "example": "123456",
+                    "description": "Unique Identifier of the system capturing the communication record"
+                },
+                "systemType": {
+                    "type": "string",
+                    "enum": [
+                        "CTI",
+                        "VoicePaltform",
+                        "Mobile",
+                        "VoiceRecorder",
+                        "Transcription",
+                        "Audit",
+                        "SocialPlatform",
+                        "Other"
+                    ],
+                    "description": "The type of communication system which is populating the data in this JSON (VoicePlatform - a PaBX or other voice platform, Mobile - a mobile carrier)"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Name of the system providing the communication record",
+                    "example": "CAS"
+                }
+            }
+        },
         "deviceInfo": {
             "type": "object",
-            "description": "Information about the device that generated this communication record",
+            "description": "Identifying the perspective of the device the system is capturing the communication record about",
             "properties": {
                 "deviceID": {
                     "type": "string",
-                    "description": "Identifier for the device",
+                    "description": "Identifier for the device used for the communication",
                     "example": "turret1"
                 },
                 "audioInterface": {
                     "type": "string",
-                    "enum": [
-                        "left handset",
-                        "microphone",
-                        "right handset"
-                    ],
-                    "description": "The device as used to handle the communication"
+                    "description": "The interface on the device used to handle the communication, for example:  ‘left handset’, ‘right handset’, ‘microphone’,‘speaker’”"
                 },
                 "buttonName": {
                     "type": "string",
@@ -184,7 +230,7 @@
                 "channelID": {
                     "type": "string",
                     "example": "C3013-ptSEP003094C3E049",
-                    "description": "Identifier for the resource (channel, extension, ect) "
+                    "description": "Identifier for the resource (channel, extension, etc) "
                 }
             }
         },
@@ -210,21 +256,33 @@
         },
         "communicationRecord": {
             "type": "object",
+            "required": [
+                "comType",
+                "comUUID",
+                "platform"
+            ],
             "properties": {
-                "type": {
+                "comType": {
                     "type": "string",
                     "enum": [
                         "Shoutdown",
                         "Ringdown",
                         "Dialtone",
+                        "Intercom",
                         "SMS",
-                        "VoiceRecorder",
-                        "Transcription",
-                        "Audit",
                         "IM",
+                        "VideoCall",
+                        "VoiceCall",
                         "Other"
                     ],
-                    "description": "The type of communication service which is populated in this JSON (dialtone, ringdown, SMS, , etc)"
+                    "description": "The type of communication which is populated in this JSON (could be the type of telephony or another communication type. )"
+                },
+                "variety": {
+                    "type": "string",
+                    "enum": [
+                        "1-1",
+                        "group"
+                    ]
                 },
                 "comUUID": {
                     "type": "string",
@@ -270,13 +328,6 @@
                 "state": {
                     "$ref": "#/definitions/event",
                     "description": "The state of the communication when the record was generated"
-                },
-                "variety": {
-                    "type": "string",
-                    "enum": [
-                        "1-1",
-                        "group"
-                    ]
                 },
                 "platform": {
                     "type": "object",
